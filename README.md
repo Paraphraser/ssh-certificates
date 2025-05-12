@@ -935,7 +935,7 @@ host mac.* mypi.* test.*
 <a name="termiusHint"></a>
 ## Termius hint
 
-If you use the excellent [Termius](https://termius.com) application, you can deploy your *SSH&nbsp;user* private key and certificate into the Termius' keychain.
+If you use the excellent [Termius](https://termius.com) application, you can deploy your *SSH&nbsp;user* private key and certificate into the Termius keychain.
 
 Here's a how-to if you are using a macOS host plus Termius running on an iOS device, where Apple's [Universal Clipboard](https://support.apple.com/en-us/102430) is available:
 
@@ -973,7 +973,7 @@ Here's a how-to if you are using a macOS host plus Termius running on an iOS dev
 
 		> Recall that a user's *certificate* contains the user's public key. Pasting a certificate into a "Public Key" field creates no ambiguity.
 
-	* Leave the Passphrase field empty.
+	* Leave the "Passphrase" field empty.
 	* Tap <kbd>Save</kbd>.
 
 The private key and certificate are text files. If you are using a different combination of hardware or operating systems, or if Universal Clipboard isn't working, you can use any method which results in getting the user's private key and certificate onto your Termius device where you can use local copy and paste.
@@ -983,7 +983,7 @@ Once you have provisioned the new key, you can use it to reach your hosts. In Te
 * Switch to the "Hosts" tab.
 * Tap <kbd>+</kbd> and choose "New Host".
 * Tap in the "Label" field and give the host a name (eg "mypi").
-* Tap in the "IP or Hostname" field and enter an fully-qualified domain name or IP address for the host (eg "mypi.jemnet.home.arpa").
+* Tap in the "IP or Hostname" field and enter a fully-qualified domain name or IP address for the host (eg "mypi.jemnet.home.arpa").
 * Scroll down to the "Username" field, tap **to the left of the "person" icon** and enter an account name on the destination host (eg "pi").
 * Leave the "Password" field empty.
 * Tap the disclosure arrow <!--disclosure off-->&#xFE65; at the right of the "Key" field.
