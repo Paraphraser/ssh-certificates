@@ -46,7 +46,7 @@
 The first time you used SSH to connect to a computer, you probably typed commands like:
 
 ``` console
-$ ssh account@host.domain`
+$ ssh account@host.domain
 ```
 
 That produced a scary-looking warning which security gurus call the "Trust On First Use" or "TOFU" pattern:
