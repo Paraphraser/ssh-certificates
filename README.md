@@ -37,6 +37,7 @@
 		- [condensed notation](#makeConfigCondensed)
 
 - [useful commands](#usefulCommands)
+- [Termius hint](#termiusHint)
 - [the big picture](#theBigPicture)
 
 <a name="background"></a>
@@ -930,6 +931,66 @@ host mac.* mypi.* test.*
 	``` console
 	$ ssh-keygen -l -f «path/to/key»
 	```
+
+<a name="termiusHint"></a>
+## Termius hint
+
+If you use the excellent [Termius](https://termius.com) application, you can deploy your *SSH&nbsp;user* private key and certificate into the Termius' keychain.
+
+Here's a how-to if you are using a macOS host plus Termius running on an iOS device, where Apple's [Universal Clipboard](https://support.apple.com/en-us/102430) is available:
+
+1. In Termius:
+
+	* Switch to the "Keychain" tab.
+	* Tap <kbd>+</kbd> and choose "Paste Key".
+	* Tap in the "Label" field and give the key a name (eg "jca").
+
+2. On your Mac, type the command:
+
+	``` console
+	$ pbcopy <~/.ssh/jca
+	```
+
+	That copies the private key to your Mac's clipboard and, via Universal Clipboard, also to your iOS device.
+
+3. In Termius:
+
+	* Tap in the "Private Key" field.
+	* Tap the "paste" icon. That pastes the private key.
+
+4. On your Mac, type the command:
+
+	``` console
+	$ pbcopy <~/.ssh/jca-cert.pub
+	```
+
+	That copies the user certificate to your Mac's clipboard and, like the private key, also to your iOS device.
+
+5. In Termius:
+
+	* Tap in the "Public Key" field.
+	* Tap the "paste" icon. That pastes the certificate.
+
+		> Recall that a user's *certificate* contains the user's public key. Pasting a certificate into a "Public Key" field creates no ambiguity.
+
+	* Leave the Passphrase field empty.
+	* Tap <kbd>Save</kbd>.
+
+The private key and certificate are text files. If you are using a different combination of hardware or operating systems, or if Universal Clipboard isn't working, you can use any method which results in getting the user's private key and certificate onto your Termius device where you can use local copy and paste.
+
+Once you have provisioned the new key, you can use it to reach your hosts. In Termius:
+
+* Switch to the "Hosts" tab.
+* Tap <kbd>+</kbd> and choose "New Host".
+* Tap in the "Label" field and give the host a name (eg "mypi").
+* Tap in the "IP or Hostname" field and enter an fully-qualified domain name or IP address for the host (eg "mypi.jemnet.home.arpa").
+* Scroll down to the "Username" field, tap **to the left of the "person" icon** and enter an account name on the destination host (eg "pi").
+* Leave the "Password" field empty.
+* Tap the disclosure arrow <!--disclosure off-->&#xFE65; at the right of the "Key" field.
+* Tap the name of the key to select it.
+* Tap <kbd>Save</kbd>.
+
+You can expect to encounter a TOFU alert the first time you connect to any host. I haven't been able to find a way to provision Termius with the public key of the host CA so I don't think this can be avoided. Tapping <kbd>Continue</kbd> adds a record to the "Known Hosts" tab. Thereafter, connections will be made on the first tap.
 
 <a name="theBigPicture"></a>
 ## the big picture
