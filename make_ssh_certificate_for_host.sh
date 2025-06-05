@@ -135,7 +135,7 @@ if [ -n "${SSH_IP_ADDR}" ] ; then
 	#		https://bugzilla.mindrot.org/show_bug.cgi?id=3746
 
 	echo -n "Trying to fetch ${SSH_KEY_TYPE} public key for ${SSH_HOST} from ${SSH_IP_ADDR} - "
-	SSH_HOST_PUB_KEY="$(ssh-keyscan -4t ${SSH_KEY_TYPE} "${SSH_IP_ADDR}" 2>/dev/null | cut -d " " -f 2-3)"
+	SSH_HOST_PUB_KEY="$(ssh-keyscan -4qt ${SSH_KEY_TYPE} "${SSH_IP_ADDR}" 2>/dev/null | cut -d " " -f 2-3)"
 
 	# did the fetch succeed?
 	if [ -n "${SSH_HOST_PUB_KEY}" ] ; then
