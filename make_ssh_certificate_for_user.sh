@@ -99,6 +99,12 @@ fi
 # last option is to use the SSH user name
 PRINCIPALS=${PRINCIPALS:-"${SSH_USER}"}
 
+# check that root is not present
+if [[ ",${PRINCIPALS}," =~ ",root," ]] ; then
+	echo "Error: the list of accounts should NOT include root."
+	exit 1
+fi
+
 # save whatever principals emerged
 echo "${PRINCIPALS}" > "${USER_DIR}/${USER_PRINCIPALS}"
 

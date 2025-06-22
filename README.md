@@ -36,6 +36,7 @@
 
 		- [condensed notation](#makeConfigCondensed)
 
+- [about the root user](#aboutRoot)
 - [useful commands](#usefulCommands)
 - [Termius hint](#termiusHint)
 - [the big picture](#theBigPicture)
@@ -431,6 +432,8 @@ Once the installer is complete, you can clean up:
 $ rm install_ssh_user_package.sh jca_dot-ssh.tar.gz
 ```
 
+Please don't try to install a user package for the root account. See [about the root user](#aboutRoot).
+
 <a name="installConfigStep"></a>
 ### make configuration record
 
@@ -662,7 +665,7 @@ Where:
 * `account` is an **optional** argument: 
 
 	- omitted, in which case the "principals" for the user certificate is either the `sshUser` (if this is the first run) or whatever was saved from the previous run; or
-	- one or more account names that `«sshUser»` uses to login on various hosts. 
+	- one or more account names that `«sshUser»` uses to login on various hosts, providing that any list of account names does not include "root" (see [about the root user](#aboutRoot)).
 
 Keep in mind that you will need to regenerate (and deploy) your user certificate each time you invent a new `«account»` name.
 
@@ -792,8 +795,10 @@ Prerequisites:
 
 	```
 	jca_dot-ssh.tar.gz
-	``` 
+	```
 
+2. The user is **not** root. See [about the root user](#aboutRoot).
+ 
 Usage:
 
 ``` console
@@ -916,6 +921,157 @@ host mac.* mypi.* test.*
   IdentitiesOnly yes
   IdentityFile ~/.ssh/jca
 ```
+
+<a name="aboutRoot"></a>
+## about the root user
+
+Historically, Unix has always had a root user. Opinions vary on the wisdom of that original design decision but it was a long time ago when things were very different, and it's always easy to be critical when you have 20:20 hindsight. Nevertheless, I'm firmly in the camp which takes the view that you don't exactly *decrease* your attack surface by enabling and routinely using an all-powerful account with a well-known username.
+
+I use a variety of Unix systems. On:
+
+* macOS and Raspberry Pi OS, the root account is disabled by default and the first user is automatically an administrator with the ability to run `sudo`.
+* Debian and Ubuntu, providing you skip the installation step where you are prompted for a root password (which is what I do), the default user you define then has `sudo` privileges and the root account is disabled (ie just like macOS and Raspberry Pi OS).
+
+If you "read between the lines" of the above, you'll see a security philosophy which includes an underlying assumption (which I endorse) that nobody should ever login as root. You will run into this *underlying assumption* if you:
+
+* Habitually use a Unix system as root;
+* Run [`make_ssh_certificate_for_user.sh`](#makeUserCertCommand) where `root` is included in the list of account names; and
+* Try to run [`install_ssh_user_package.sh`](#installUserCommand) on any system where you login as root.
+
+You'll be told you can't run that last command using `sudo` (ie you can't run it when you are root).
+
+Now, it's your system and your rules but it's my repo and my rules so I don't need to make it easy for you. What I strongly recommend is adding a privileged user and disabling the root account. Once that is in place, you will be able to run commands using `sudo` and, where necessary or convenient, you will still be able to get a root shell using this pattern:
+
+``` console
+$ sudo -s
+# ... run one or more privileged commands here
+# exit
+$
+```
+
+In words:
+
+1. Get a privileged shell as root. The system prompt changes to `#` to indicate you are running as root.
+2. Run as many commands as you need without needing to prefix each one with `sudo`.
+3. When you're done, type `exit` or press <kbd>control</kbd>+<kbd>d</kbd>. You are dropped back to the original user and the system prompt changes back to `$` to indicate you are no longer running as root.
+
+Here is the procedure for adding a privileged user account to your system:
+
+1. Connect to your Unix host and login as root.
+
+2. Define the name of the privileged account you want to create:
+
+	``` console
+	# ACCOUNT=«name»
+	```
+
+	Notes:
+
+	1. The leading `#` does not indicate a comment. It is the system prompt which reminds you that you are running as root.
+	2. The rules for a Unix account name are:
+
+		* start with a lower-case letter;
+		* a maximum of 8 characters, comprising only lower-case letters or digits.
+
+3. Create the account:
+
+	``` console
+	# adduser --home /home/$ACCOUNT --shell /bin/bash $ACCOUNT
+	```
+
+	You will be prompted, twice, for a password. You will also be prompted for other information but it is safe to respond to each prompt by pressing <kbd>return</kbd>.
+
+4. Give the account the ability to run `sudo`:
+
+	``` console
+	# usermod -G sudo -a $ACCOUNT
+	# usermod -G adm -a $ACCOUNT
+	```
+
+5. Test that you can login as that user:
+
+	``` console
+	# su - $ACCOUNT
+	$
+	```
+
+	Notes:
+
+	1. Because you are root when you run that command, you will not be prompted for a password for the account.
+	2. The system prompt will change to `$` indicating you are no longer root.
+
+6. Test that the newly-added user can run commands using `sudo`:
+
+	``` console
+	$ sudo echo hello
+	```
+
+	You should be prompted for a password. Respond with the password you defined in step 3. This step confirms the validity of the password.
+
+7. Give the account the ability to run `sudo` **without** being prompted for a password:
+
+	``` console
+	$ echo "$USER  ALL=(ALL) NOPASSWD:ALL" | sudo tee "/etc/sudoers.d/$USER"
+	```
+
+8. Test that you can execute `sudo` commands **without** being prompted for a password:
+
+	``` console
+	$ sudo -K
+	$ sudo echo hello
+	```
+
+	Notes:
+
+	1. When you provided a password in step 6, you were implicitly granted the permission to continue to use `sudo` without another password prompt. The implicit permission persists until you logout or a timeout expires, or if you explicitly revoke the permission, which is what `sudo -K` does.
+
+	2. Despite the revocation, the second command should still succeed **without** prompting for a password, because the account was added to the "sudoers" list in step 7.
+
+9. Drop back to the original root account:
+
+	``` console
+	$ exit
+	#
+	```
+
+	The system prompt changes back to `#` to indicate that you are running as root.
+
+10. Explicitly deny SSH access by root:
+
+	``` console
+	# echo "PermitRootLogin no" >/etc/ssh/sshd_config.d/500-no-root-login.conf
+	# systemctl restart ssh
+	```
+
+	Notes:
+
+	1. In theory, the default for `PermitRootLogin` is `prohibit-password` but experience shows this is not always true. It is better to set `no` explicitly.
+	2. If you need to undo this change, delete `500-no-root-login.conf` and restart SSH.
+	3. If you try to SSH as root while access is disabled, the behaviour is as though you had entered an incorrect password. You are never told that access by root is disabled.
+
+11. Lock the root account (optional but recommended):
+
+	``` console
+	# passwd --lock root
+	```
+
+	Locking the account:
+
+	* Prevents use of `su -` or `su - root` to become root;
+	* Does not prevent use of `sudo -s` to get a shell as root;
+	* Also prevents login via SSH so, technically, you don't need to do step 10 as well.
+
+	Locking leaves the original root password in place but disables it. To re-enable the root account (which, of necessity, you will be doing from the privileged account you created earlier):
+
+	``` console
+	$ sudo passwd --unlock root
+	```
+
+12. Logout
+
+	``` console
+	# exit
+	```
 
 <a name="usefulCommands"></a>
 ## useful commands
